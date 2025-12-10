@@ -84,9 +84,6 @@ function prepareQuestionsFromPool(pool, desiredCount){
       c = counts();
     }
     const final = counts();
-    const distEl = el('distDisplay');
-    if(distEl){ distEl.textContent = 'Answer positions: ' + final.map((v,i)=>`[${i+1}: ${v}]`).join(' '); }
-    console.log('Answer position distribution after balancing:', final);
   })();
 
   return prepared;
@@ -271,14 +268,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   el('practiceBtn').addEventListener('click', ()=>startTest(false));
   const fb = el('focusedBtn'); if(fb) fb.addEventListener('click', ()=>startFocusedTest(true));
   // Next button handlers are set by renderQuestion so no static listener here
-  const debugBtn = el('debugToggle');
-  const distEl = el('distDisplay');
-  if(debugBtn && distEl){
-    // show if URL contains ?debug=1
-    const params = new URLSearchParams(window.location.search);
-    if(params.get('debug')==='1') distEl.classList.add('visible');
-    debugBtn.addEventListener('click', ()=>{ distEl.classList.toggle('visible'); });
-  }
   const csvBtn = el('csvBtn'); if(csvBtn) csvBtn.addEventListener('click', exportCSV);
   el('prevBtn').addEventListener('click', prevQuestion);
   el('submitBtn').addEventListener('click', ()=>{ if(confirm('Submit your answers?')) submitQuiz(); });
