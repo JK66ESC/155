@@ -1,6 +1,6 @@
 [
   {"id":1,"question":"Which piece of PPE is essential when checking under a vehicle to avoid head injury?","options":["Safety glasses","Hearing protection","Hard hat","Gloves"],"answer":2},
-  {"id":2,"question":"Before starting any inspection, which action is most important to avoid injury?","options":["Remove vehicle keys","Read the customer complaint","Disconnect the battery","Secure the vehicle with chocks and apply park brake"],"answer":3},
+  {"id":2,"question":"Before starting any inspection, which action is most important to avoid injury?","options":["Remove vehicle keys","Read the customer complaint","Disconnect the battery","Secure the vehicle with chocks and apply park brake"],"answer":0},
   {"id":3,"question":"What does VPE stand for in vehicle inspections?","options":["Vehicle Protective Equipment","Vehicle Performance Evaluation","Visual Pre-Examination","Valved Pressure Equipment"],"answer":0},
   {"id":4,"question":"Which inspection method is typically carried out before handing a vehicle to a customer?","options":["Pre-work inspection","Pre-delivery inspection","Maintenance inspection","Pre-MOT inspection"],"answer":1},
   {"id":5,"question":"When inspecting tyres, what is the legal minimum tread depth for most passenger cars in the UK?","options":["1.6 mm","1.0 mm","2.5 mm","3.0 mm"],"answer":0},
