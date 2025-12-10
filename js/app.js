@@ -185,6 +185,15 @@ function renderQuestion(){
     el('options').appendChild(wrap);
   });
   el('qIndex').textContent = currentIndex+1;
+  // Only show Submit on the final question
+  const submitBtn = el('submitBtn');
+  if(submitBtn){
+    if(currentIndex === (totalQuestions - 1)){
+      submitBtn.style.display = '';
+    } else {
+      submitBtn.style.display = 'none';
+    }
+  }
 }
 
 function nextQuestion(){
