@@ -8,13 +8,9 @@ let timer = {seconds:0, running:false, interval:null, duration:3600}; // default
 const el = id=>document.getElementById(id);
 
 function conciseOption(text){
+  // Preserve full option text to ensure answers are never truncated.
   if(!text) return '';
-  text = String(text).trim();
-  text = text.replace(/^\s*(to|the|a|an|that|which)\s+/i,'');
-  text = text.split(/[;,–—\-\(\)\/:]/)[0].trim();
-  const words = text.split(/\s+/).filter(Boolean);
-  if(words.length > 6) text = words.slice(0,6).join(' ') + '...';
-  return text;
+  return String(text).trim();
 }
 
 async function loadQuestions(){
@@ -52,8 +48,10 @@ function prepareQuestionsFromPool(pool, desiredCount){
     }
     const options_shuffled = opts.map(o=>o.text);
     const answer_shuffled = opts.findIndex(o=>o.idx===q.answer);
-    const correctText = q.options[q.answer];
-    return Object.assign({}, q, {options_shuffled, answer_shuffled, correctText});
+    const correctText = q.options_full ? q.options_full[q.answer] : q.options[q.answer];
+    // also create a shuffled-full-options array (original full wording) for reporting
+    const options_shuffled_full = opts.map(o => (q.options_full ? q.options_full[o.idx] : q.options[o.idx]));
+    return Object.assign({}, q, {options_shuffled, options_shuffled_full, answer_shuffled, correctText});
   });
 
   // Balance answer positions
@@ -187,11 +185,17 @@ function renderQuestion(){
   el('qIndex').textContent = currentIndex+1;
   // Only show Submit on the final question
   const submitBtn = el('submitBtn');
-  if(submitBtn){
+  if(submitBtn) submitBtn.style.display = 'none';
+
+  // Update Next button: replace text with 'Finish' on final question and change handler
+  const nextBtn = el('nextBtn');
+  if(nextBtn){
     if(currentIndex === (totalQuestions - 1)){
-      submitBtn.style.display = '';
+      nextBtn.textContent = 'Finish';
+      nextBtn.onclick = ()=>{ if(confirm('Submit your answers?')) submitQuiz(); };
     } else {
-      submitBtn.style.display = 'none';
+      nextBtn.textContent = 'Next';
+      nextBtn.onclick = nextQuestion;
     }
   }
 }
@@ -212,13 +216,15 @@ function submitQuiz(){
     const correct = (typeof q.answer_shuffled === 'number')? q.answer_shuffled : q.answer;
     const ok = (ans===correct);
     if(ok)score++;
-    const opts = q.options_shuffled || q.options;
-    review.push({index:i+1,question:q.question,selected:ans,correct,options:opts});
+    const opts_display = q.options_shuffled || q.options;
+    // prefer full wording for reports (if available)
+    const opts_full = q.options_shuffled_full || q.options_full || opts_display;
+    review.push({index:i+1,question:q.question,selected:ans,correct,options:opts_display,options_full:opts_full});
   }
   el('scoreSummary').innerHTML = `<p><strong>Score:</strong> ${score} / ${questions.length} (${Math.round(score/questions.length*100)}%)</p>`;
   el('reviewList').innerHTML = review.map(r=>{
-    const sel = r.selected==null?'<em>Unanswered</em>':`Your answer: ${escapeHtml(r.options[r.selected]||'')}`;
-    const cor = `Correct answer: ${escapeHtml(r.options[r.correct])}`;
+    const sel = r.selected==null?'<em>Unanswered</em>':`Your answer: ${escapeHtml(r.options_full[r.selected]||r.options[r.selected]||'')}`;
+    const cor = `Correct answer: ${escapeHtml(r.options_full[r.correct]||r.options[r.correct]||'')}`;
     const cls = (r.selected===r.correct)?'correct':'incorrect';
     return `<li><div><strong>Q${r.index}:</strong> ${escapeHtml(r.question)}</div><div class="${cls}">${sel} — ${cor}</div></li>`;
   }).join('');
@@ -230,6 +236,32 @@ function escapeHtml(s){ if(!s) return ''; return s.replace(/[&<>"']/g, c=>({'&':
 
 function reviewAnswers(){ window.print(); }
 
+function exportCSV(){
+  // Build CSV from current questions and selected answers using full wording
+  const rows = [];
+  rows.push(['Q#','Question','Your answer','Correct answer','Correct?']);
+  for(let i=0;i<questions.length;i++){
+    const q = questions[i];
+    const sel = selected[i];
+    const correct = (typeof q.answer_shuffled === 'number')? q.answer_shuffled : q.answer;
+    const opts_full = q.options_shuffled_full || q.options_full || q.options;
+    const your = (sel==null)? '' : (opts_full[sel]||'');
+    const cor = opts_full[correct]||'';
+    const ok = (sel===correct)? 'yes':'no';
+    rows.push([i+1, q.question, your, cor, ok]);
+  }
+  const csv = rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `quiz_results_${Date.now()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 function restart(){ el('intro').classList.remove('hidden'); el('quizArea').classList.add('hidden'); el('resultArea').classList.add('hidden'); }
 
 // Event bindings
@@ -238,7 +270,16 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   el('startBtn').addEventListener('click', ()=>startTest(true));
   el('practiceBtn').addEventListener('click', ()=>startTest(false));
   const fb = el('focusedBtn'); if(fb) fb.addEventListener('click', ()=>startFocusedTest(true));
-  el('nextBtn').addEventListener('click', nextQuestion);
+  // Next button handlers are set by renderQuestion so no static listener here
+  const debugBtn = el('debugToggle');
+  const distEl = el('distDisplay');
+  if(debugBtn && distEl){
+    // show if URL contains ?debug=1
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('debug')==='1') distEl.classList.add('visible');
+    debugBtn.addEventListener('click', ()=>{ distEl.classList.toggle('visible'); });
+  }
+  const csvBtn = el('csvBtn'); if(csvBtn) csvBtn.addEventListener('click', exportCSV);
   el('prevBtn').addEventListener('click', prevQuestion);
   el('submitBtn').addEventListener('click', ()=>{ if(confirm('Submit your answers?')) submitQuiz(); });
   el('reviewBtn').addEventListener('click', reviewAnswers);

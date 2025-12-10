@@ -19,6 +19,12 @@ Focused Unit 155
 - Use the `Focused: Unit 155` button on the homepage to run a concise, criteria-aligned quiz built from `data/focused_questions.json`.
 - The focused set is ideal for revision of Unit 155 assessment criteria and maps to the learning outcomes in the unit specification.
 
+CSV export
+- After submission use `Export CSV` to download a CSV of questions, your answers, correct answers and a correctness flag. The CSV uses full original option wording for accuracy.
+
+Debug distribution
+- The answer-position distribution readout is hidden by default. Reveal it by adding `?debug=1` to the URL or click the `Debug` button in the header.
+
 Deployment (GitHub Pages)
 1. Push the repository to GitHub.
 2. In repository settings enable GitHub Pages and set the site source to the `main` branch (root).
